@@ -138,7 +138,7 @@ def send_command(conn, addr):
         # [WIP] desligar o sistema de alarme
         elif(command == ord('p')):
             if(not alarm_system):
-                activate_alarm_system(conn, addr)
+                deactivate_alarm_system(conn, addr)
             else:
                 alarm_system = False
                 alarm_buzz = False
@@ -268,12 +268,11 @@ def init_socket(host: str, port: int):
   
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-  s.bind((host, port))
+  s.bind(('0.0.0.0', port))
   s.listen()
 
   while True:
       conn, addr  = s.accept()
-      print(addr)
       
       # thread para ouvir o servidor distribuído
       listen_socket_thread = Thread(target=listen_socket, args=(conn, addr ))
