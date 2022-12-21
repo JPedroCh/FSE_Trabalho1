@@ -7,6 +7,15 @@ Repositório para o [trabalho 1](https://gitlab.com/fse_fga/trabalhos-2022_2/tra
 ## Dependências
 
 * python3 (versão utilizada nos testes: 3.7.3)
+* adafruit-circuitpython-dht 
+
+
+  Para instalar:`pip3 install adafruit-circuitpython-dht`
+  
+* board 
+
+
+  Para instalar: `pip3 install board`
 
 ## Como executar
 
