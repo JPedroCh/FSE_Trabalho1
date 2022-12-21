@@ -2,8 +2,6 @@
 
 Repositório para o [trabalho 1](https://gitlab.com/fse_fga/trabalhos-2022_2/trabalho-1-2022-2) da disciplina de Fundamentos de Sistemas Embarcados (FGA-UnB).
 
-# Servidor central
-
 ## Dependências
 
 * python3 (versão utilizada nos testes: 3.7.3)
