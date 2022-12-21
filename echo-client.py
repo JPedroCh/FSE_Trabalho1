@@ -287,25 +287,30 @@ def build_json_message():
 
 def decode_message(data):
   global actual_status, alarm_system
-  message = json.loads(data)
-  print("\n\n COMMAND = ", message)
-  command = message["comando"]
+  try:
+    message = json.loads(data)
+    if(message["comando"][1]["ip"] == config_data["ip_servidor_distribuido"]):
+      if(message["comando"][1]["nome"] == config_data["nome"] or message["comando"][1]["nome"] == "Todas"):
+        print("\n\n COMMAND = ", message)
+        command = message["comando"]
 
-  if(command["ordem"] == True):
-    # GPIO.output(command["alvo"], GPIO.HIGH)
-    for i, output in enumerate(actual_status["outputs"]):
-      for alvo in command["alvo"]:
-        if(output["gpio"] == alvo):
-          actual_status["outputs"][i]["status"] = True
-  elif (command["ordem"] == False):
-    # GPIO.output(command["alvo"], GPIO.LOW)
-    for i, output in enumerate(actual_status["outputs"]):
-      for alvo in command["alvo"]:
-        if(output["gpio"] == alvo):
-          actual_status["outputs"][i]["status"] = False
-  elif (command["ordem"] == "sistema de alarme ligado"):
-    alarm_system = True
-  elif (command["ordem"] == "sistema de alarme desligado"):
-    alarm_system = False
+        if(command[0]["ordem"] == True):
+          # GPIO.output(command[0]["alvo"], GPIO.HIGH)
+          for i, output in enumerate(actual_status["outputs"]):
+            for alvo in command[0]["alvo"]:
+              if(output["gpio"] == alvo):
+                actual_status["outputs"][i]["status"] = True
+        elif (command[0]["ordem"] == False):
+          # GPIO.output(command[0]["alvo"], GPIO.LOW)
+          for i, output in enumerate(actual_status["outputs"]):
+            for alvo in command[0]["alvo"]:
+              if(output["gpio"] == alvo):
+                actual_status["outputs"][i]["status"] = False
+        elif (command[0]["ordem"] == "sistema de alarme ligado"):
+          alarm_system = True
+        elif (command[0]["ordem"] == "sistema de alarme desligado"):
+          alarm_system = False
+  except:
+    print("Erro ao fazer o load do json recebido, tente novamente")
 
 main()

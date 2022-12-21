@@ -77,14 +77,18 @@ def decode_command (code, outputs):
   return decoded_command
 
 # cria mensagem de comando
-def build_command_message(order, target ):
+def build_command_message(order, target, addr, nome_sala ):
   global message_backup
   message_json = {"comando": {}}
   temp = {}
   temp["ordem"] = order
   temp["alvo"] = target
-  
-  message_json["comando"] = temp
+
+  temp_addr = {}
+  temp_addr["ip"] = addr[0]
+  temp_addr["nome"] = nome_sala
+
+  message_json["comando"] = [temp, temp_addr]
   message_backup = message_json
   return message_json
 
@@ -105,7 +109,7 @@ def main ():
 
 
 # envia comando
-def send_command(conn):
+def send_command(conn, addr):
     global command, salas_info, fire_alarm, alarm_buzz, alarm_system
 
     gpio = -1
@@ -113,7 +117,7 @@ def send_command(conn):
     while True:
         if(fire_alarm and not alarm_buzz):
             # chama o buzzer
-            activate_buzzer(conn)
+            activate_buzzer(conn, addr)
 
         # time.sleep(0.09)
 
@@ -126,7 +130,7 @@ def send_command(conn):
             break
         elif(command == ord('a')):
             if(not alarm_system):
-                activate_alarm_system(conn)
+                activate_alarm_system(conn, addr)
             else:
                 alarm_system = False
                 alarm_buzz = False
@@ -134,7 +138,7 @@ def send_command(conn):
         # [WIP] desligar o sistema de alarme
         elif(command == ord('p')):
             if(not alarm_system):
-                activate_alarm_system(conn)
+                activate_alarm_system(conn, addr)
             else:
                 alarm_system = False
                 alarm_buzz = False
@@ -147,7 +151,7 @@ def send_command(conn):
           # sala selecionada
           elif(selected_sala == sala["nome"]):
             decoded_message = decode_command(command, sala["outputs"])
-            message = build_command_message(decoded_message[0], decoded_message[1])
+            message = build_command_message(decoded_message[0], decoded_message[1], addr, selected_sala)
             break
         command = -1
 
@@ -157,14 +161,14 @@ def send_command(conn):
           if not message_sent: break
         time.sleep(0.5)
 
-def activate_buzzer(conn):
+def activate_buzzer(conn, addr):
     global salas_info, alarm_buzz
     for i, sala in enumerate(salas_info):
         for j, sala_output in enumerate(sala["outputs"]):
             if(sala_output["type"] == 'alarme'):
                 if(not sala_output["status"]):
                     add_to_log(f"Ligar sirene")
-                    message = build_command_message(True, [sala_output["gpio"]])
+                    message = build_command_message(True, [sala_output["gpio"]], addr, sala["nome"])
                     try:
                       
                       conn.send(json.dumps(message).encode('utf-8'))
@@ -174,7 +178,7 @@ def activate_buzzer(conn):
                       salas_info[i]["outputs"][j]["status"] = False
 
 # sistema de alarme só é ativado se todos os inputs estiverem desligados
-def activate_alarm_system(conn):
+def activate_alarm_system(conn, addr):
     global salas_info, alarm_system, alarm_buzz
     alarm_system = not alarm_system
     if(alarm_system):
@@ -184,7 +188,7 @@ def activate_alarm_system(conn):
                     alarm_system = False
                     break
     if(alarm_system):
-        message = build_command_message("sistema de alarme ligado", [])
+        message = build_command_message("sistema de alarme ligado", [], addr, "Todas")
         
         conn.send(json.dumps(message).encode('utf-8'))
         add_to_log("Ligar sistema de alarme")
@@ -193,12 +197,12 @@ def activate_alarm_system(conn):
     else:
         alarm_buzz = False
 
-def deactivate_alarm_system(conn):
+def deactivate_alarm_system(conn, addr):
     global alarm_system
     alarm_system = not alarm_system
     if(alarm_system):
         add_to_log("Desligar sistema de alarme")
-        message = build_command_message("sistema de alarme desligado", [])
+        message = build_command_message("sistema de alarme desligado", [], addr, "Todas")
         
         conn.send(json.dumps(message).encode('utf-8'))
         alarm_system_thread.join()
@@ -214,7 +218,7 @@ def alarm_routine():
             for sala_input in sala["inputs"]:
                 if(sala_input["status"] and not alarm_buzz):
                     alarm_buzz = True
-                    activate_buzzer(conn)
+                    activate_buzzer(conn, addr)
                     break
         if not alarm_system: break
         time.sleep(0.5)
@@ -233,8 +237,9 @@ def remove_from_salas_info(actual_status):
       salas_info.remove(sala)
 
 
+
 # funcao responsavel por ouvir o servidor distribuído
-def listen_socket(conn,  ):
+def listen_socket(conn, addr   ):
     global salas_info, fire_alarm
     while True:
         try:
@@ -267,14 +272,15 @@ def init_socket(host: str, port: int):
   s.listen()
 
   while True:
-      conn, addr = s.accept()
+      conn, addr  = s.accept()
+      print(addr)
       
       # thread para ouvir o servidor distribuído
-      listen_socket_thread = Thread(target=listen_socket, args=(conn,))
+      listen_socket_thread = Thread(target=listen_socket, args=(conn, addr ))
       listen_socket_thread.start()
 
       # thread para envio dos comandos
-      send_command_thread = Thread(target=send_command, args=(conn,))
+      send_command_thread = Thread(target=send_command, args=(conn, addr ))
       send_command_thread.start()
 
 def decode_message(data):
