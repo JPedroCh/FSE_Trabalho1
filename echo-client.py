@@ -69,7 +69,6 @@ def calculate_number_people_entering(pin):
   start_time_entering = time.time()
   while(1):
     tmp = GPIO.input(pin)
-    print("enter pin = ", tmp)
     if(tmp == 0):
       end_time_entering = time.time()
       full_time = end_time_entering - start_time_entering
@@ -94,7 +93,6 @@ def calculate_number_people_leaving(pin):
   start_time_leaving = time.time()
   while(1):
     tmp = GPIO.input(pin)
-    print("leave pin = ", tmp)
     if(tmp == 0):
       end_time_leaving = time.time()
       full_time = end_time_leaving - start_time_leaving
@@ -151,7 +149,6 @@ def run_app( data_config):
     #if(input_values[0] == True and alarm_system == True):
 
     # envia a mensagem para o socket
-    # print("MENSAGEM ENVIADA, sent = ", build_json_message())
     try:
       sent = s.send(build_json_message().encode('utf-8')) 
     except:
@@ -247,8 +244,6 @@ def build_json_message():
   message_json["hum"] = actual_status["hum"]
   message_json["pessoas"] = qtd_pessoas
 
-  print(message_json["pessoas"])
-
   jsonString = json.dumps(message_json)
   return jsonString
 
@@ -259,7 +254,6 @@ def decode_message(data):
 
     if(message["comando"][1]["ip"] == config_data["ip_servidor_distribuido"]):
       if(message["comando"][1]["nome"] == config_data["nome"] or message["comando"][1]["nome"] == "Todas"):
-        print("\n\n COMMAND = ", message)
         command = message["comando"]
 
         if(command[0]["ordem"] == True):
